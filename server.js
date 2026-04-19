@@ -1,17 +1,11 @@
-const express = require("express");   // ✅ IMPORTANT
-const app = express();
+const cors = require("cors");
 
-app.get("/api/products/pos", (req, res) => {
-  res.json([
-    { id: 1, name: "Tea", price: 10 },
-    { id: 2, name: "Coffee", price: 15 },
-    { id: 3, name: "Sandwich", price: 40 }
-  ]);
-});
-
-// ✅ VERY IMPORTANT (server must listen)
-const PORT = process.env.PORT || 5000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://pos-frontend-git-main-sangeethas-projects-6e69f7d4.vercel.app"
+    ],
+    credentials: true
+  })
+);
