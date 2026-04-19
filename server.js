@@ -1,11 +1,10 @@
+const express = require("express");
 const cors = require("cors");
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "https://pos-frontend-git-main-sangeethas-projects-6e69f7d4.vercel.app"
-    ],
-    credentials: true
-  })
-);
+const app = express();
+
+// ✅ Allow all frontend requests (fixes "can't connect" issue)
+app.use(cors());
+
+// Optional but recommended
+app.use(express.json());
