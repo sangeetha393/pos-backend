@@ -2061,13 +2061,12 @@ function kitchenViewOnlyApiGate(req: Request, res: Response, next: NextFunction)
 }
 
 export function registerRoutes(app: Express) {
-  app.get("/api/products/pos", (_req, res) => {
-    const products = [
+  app.get("/api/products/pos", (req, res) => {
+    res.json([
       { id: 1, name: "Tea", price: 10 },
       { id: 2, name: "Coffee", price: 15 },
       { id: 3, name: "Sandwich", price: 40 }
-    ];
-    res.json(products);
+    ]);
   });
 
   const pub = Router();
