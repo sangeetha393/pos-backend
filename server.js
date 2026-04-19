@@ -1,20 +1,6 @@
-const express = require("express");
-
-const app = express();
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("API running");
-});
-
-app.post("/order", (req, res) => {
-  console.log(req.body);
-  res.json({ success: true });
-});
-
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
-});
-app.listen(process.env.PORT || 3000, () => {
-    console.log("Server running");
-  });
+/**
+ * When the process is started as `node server.js`, load the compiled Express app.
+ * The real POS API lives in `src/index.ts` → `dist/index.js` (includes GET /api/products/pos).
+ * Run `npm run build` before starting in production.
+ */
+require("./dist/index.js");
