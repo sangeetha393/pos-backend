@@ -2,8 +2,6 @@ import express from "express";
 import cors from "cors";
 
 const app = express();
-
-// ✅ Render port
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
@@ -13,26 +11,37 @@ app.use(express.json());
    BASIC ROUTES
 ========================= */
 
-// root
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
-// health
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
 /* =========================
-   PRODUCTS (MENU)
+   PRODUCTS / MENU (ALL VARIANTS)
 ========================= */
 
+const menuData = [
+  { id: 1, name: "Tea", price: 10 },
+  { id: 2, name: "Coffee", price: 15 },
+  { id: 3, name: "Sandwich", price: 40 }
+];
+
+// main
 app.get("/api/products/pos", (req, res) => {
-  res.json([
-    { id: 1, name: "Tea", price: 10 },
-    { id: 2, name: "Coffee", price: 15 },
-    { id: 3, name: "Sandwich", price: 40 }
-  ]);
+  res.json(menuData);
+});
+
+// fallback 1
+app.get("/api/products", (req, res) => {
+  res.json(menuData);
+});
+
+// fallback 2
+app.get("/api/menu", (req, res) => {
+  res.json(menuData);
 });
 
 /* =========================
@@ -72,7 +81,7 @@ app.get("/api/dashboard", (req, res) => {
 });
 
 /* =========================
-   ORDERS (BASIC MOCK)
+   ORDERS
 ========================= */
 
 app.get("/api/orders", (req, res) => {
@@ -87,7 +96,7 @@ app.post("/api/orders", (req, res) => {
 });
 
 /* =========================
-   LOGIN (MOCK)
+   AUTH
 ========================= */
 
 app.post("/api/auth/login", (req, res) => {
