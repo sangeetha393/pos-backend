@@ -159,3 +159,12 @@ app.get("/api/waiter-calls", (req, res) => {
 app.get("/api/tables", (req, res) => {
   res.json([]);
 });
+// fallback dashboard (VERY IMPORTANT)
+app.get("/api/dashboard", (req, res) => {
+  res.json({
+    totalSales: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    netProfit: 0
+  });
+});
