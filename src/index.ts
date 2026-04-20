@@ -32,10 +32,10 @@ import { initSqliteOrderBackup } from "./db/sqljsOrderBackup";
 const app = express();
 app.set("trust proxy", 1);
 
-// 🔥 IMPORTANT (Render PORT FIX)
+// ✅ Render PORT fix
 const port = Number(process.env.PORT) || 4000;
 
-// Health routes
+// ✅ Health routes
 app.get("/health", (_req, res) => {
   res.json({
     status: "ok",
@@ -53,7 +53,7 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-// Middleware
+// ✅ Middleware
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -62,84 +62,96 @@ app.use("/uploads", express.static(UPLOADS_DIR));
 // ❌ REMOVED LAN BLOCK (IMPORTANT)
 // app.use(lanOnlyMiddleware);
 
-console.log("[routes] Mounting /api routes...");
-
 app.use("/api", forgotOtpApiRoutes);
 
-void (async () => {
-  await initDatabase();
-  await initMongoQr();
+// 🔥 Create server first
+const httpServer = createServer(app);
 
+const io = new Server(httpServer, {
+  cors: { origin: true, credentials: true }
+});
+
+attachStoreFeatureIo(io);
+
+io.on("connection", (socket) => {
+  const raw = socket.handshake.auth as { token?: string } | undefined;
+  const token = typeof raw?.token === "string" ? raw.token.trim() : "";
+  if (!token) return;
   try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+    const sid = storeIdFromJwtToken(token);
+    if (sid) socket.join(`store:${sid}`);
   } catch {}
+});
 
-  runStartupJsonRecovery(DATA_DIR);
-  startBackupScheduler(DATA_DIR);
+setKotSocketEmitter((event, payload) => {
+  io.emit(event, payload);
+});
 
-  await initSqliteOrderBackup();
-  await initOrderStore();
-  await bootstrapPosMenuInventoryPersistence();
+// 🔥 START SERVER FIRST (fixes Render issue)
+httpServer.listen(port, "0.0.0.0", () => {
+  console.log(`POS backend running on port ${port}`);
+});
 
-  registerRoutes(app);
-  registerSuperAdminRoutes(app);
+// 🔥 THEN run async setup (safe)
+(async () => {
+  try {
+    await initDatabase();
+    await initMongoQr();
 
-  function kotKitchenFeatureGate(req: Request, res: Response, next: NextFunction): void {
-    if (!req.user) {
-      res.status(401).json({ error: "Authentication required" });
-      return;
-    }
-    if (req.user.role === "super_admin") {
-      res.status(403).json({ error: "Seller accounts cannot use the KOT API" });
-      return;
-    }
-    if (getStoreFeaturesForStore(req.user.storeId).kitchen) {
-      next();
-      return;
-    }
-    res.status(403).json({ message: "Feature disabled", code: "FEATURE_DISABLED", feature: "kitchen" });
-  }
-
-  app.use("/api/kot", authMiddleware, kotKitchenFeatureGate, createKotRouter());
-  registerOpsRoutes(app);
-
-  app.use(errorMiddleware);
-
-  const httpServer = createServer(app);
-
-  const io = new Server(httpServer, {
-    cors: { origin: true, credentials: true }
-  });
-
-  attachStoreFeatureIo(io);
-
-  io.on("connection", (socket) => {
-    const raw = socket.handshake.auth as { token?: string } | undefined;
-    const token = typeof raw?.token === "string" ? raw.token.trim() : "";
-    if (!token) return;
     try {
-      const sid = storeIdFromJwtToken(token);
-      if (sid) socket.join(`store:${sid}`);
+      fs.mkdirSync(DATA_DIR, { recursive: true });
     } catch {}
-  });
 
-  setKotSocketEmitter((event, payload) => {
-    io.emit(event, payload);
-  });
+    runStartupJsonRecovery(DATA_DIR);
+    startBackupScheduler(DATA_DIR);
 
-  const shutdown = async (signal: string) => {
-    console.log(`[shutdown] ${signal}`);
-    await flushAllJsonWriteQueues().catch(() => undefined);
-    await new Promise<void>((resolve) => httpServer.close(() => resolve()));
-    await closeDatabase().catch(() => undefined);
-    await closeMongoQr().catch(() => undefined);
-    process.exit(0);
-  };
+    await initSqliteOrderBackup();
+    await initOrderStore();
+    await bootstrapPosMenuInventoryPersistence();
 
-  process.once("SIGINT", () => void shutdown("SIGINT"));
-  process.once("SIGTERM", () => void shutdown("SIGTERM"));
+    registerRoutes(app);
+    registerSuperAdminRoutes(app);
 
-  httpServer.listen(port, "0.0.0.0", () => {
-    console.log(`POS backend running on port ${port}`);
-  });
+    function kotKitchenFeatureGate(req: Request, res: Response, next: NextFunction): void {
+      if (!req.user) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+      if (req.user.role === "super_admin") {
+        res.status(403).json({ error: "Seller accounts cannot use the KOT API" });
+        return;
+      }
+      if (getStoreFeaturesForStore(req.user.storeId).kitchen) {
+        next();
+        return;
+      }
+      res.status(403).json({
+        message: "Feature disabled",
+        code: "FEATURE_DISABLED",
+        feature: "kitchen"
+      });
+    }
+
+    app.use("/api/kot", authMiddleware, kotKitchenFeatureGate, createKotRouter());
+    registerOpsRoutes(app);
+
+    app.use(errorMiddleware);
+
+    console.log("✅ Startup completed");
+  } catch (err) {
+    console.error("❌ Startup error:", err);
+  }
 })();
+
+// ✅ Graceful shutdown
+const shutdown = async (signal: string) => {
+  console.log(`[shutdown] ${signal}`);
+  await flushAllJsonWriteQueues().catch(() => undefined);
+  await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+  await closeDatabase().catch(() => undefined);
+  await closeMongoQr().catch(() => undefined);
+  process.exit(0);
+};
+
+process.once("SIGINT", () => void shutdown("SIGINT"));
+process.once("SIGTERM", () => void shutdown("SIGTERM"));
