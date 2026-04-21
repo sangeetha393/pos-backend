@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 /* =========================
-   BASIC ROUTES
+   BASIC
 ========================= */
 
 app.get("/", (req, res) => {
@@ -20,7 +20,7 @@ app.get("/health", (req, res) => {
 });
 
 /* =========================
-   PRODUCTS / MENU (ALL VARIANTS)
+   PRODUCTS
 ========================= */
 
 const menuData = [
@@ -29,20 +29,9 @@ const menuData = [
   { id: 3, name: "Sandwich", price: 40 }
 ];
 
-// main
-app.get("/api/products/pos", (req, res) => {
-  res.json(menuData);
-});
-
-// fallback 1
-app.get("/api/products", (req, res) => {
-  res.json(menuData);
-});
-
-// fallback 2
-app.get("/api/menu", (req, res) => {
-  res.json(menuData);
-});
+app.get("/api/products/pos", (req, res) => res.json(menuData));
+app.get("/api/products", (req, res) => res.json(menuData));
+app.get("/api/menu", (req, res) => res.json(menuData));
 
 /* =========================
    SETTINGS
@@ -57,36 +46,50 @@ app.get("/api/settings", (req, res) => {
 });
 
 /* =========================
-   TABLES
-========================= */
-
-app.get("/api/customer/table/:id", (req, res) => {
-  res.json({
-    table: req.params.id,
-    status: "available",
-    guests: 0
-  });
-});
-
-/* =========================
-   DASHBOARD
+   DASHBOARD (CRITICAL)
 ========================= */
 
 app.get("/api/dashboard", (req, res) => {
   res.json({
-    sales: 0,
-    orders: 0,
-    profit: 0
+    totalSales: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    netProfit: 0
   });
 });
+
+app.get("/api/dashboard/summary", (req, res) => {
+  res.json({
+    totalSales: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    netProfit: 0
+  });
+});
+
+/* =========================
+   REPORTS
+========================= */
+
+app.get("/api/reports/7days", (req, res) => {
+  res.json([]);
+});
+
+/* =========================
+   OTHER REQUIRED APIs
+========================= */
+
+app.get("/api/inventory/alerts", (req, res) => res.json([]));
+app.get("/api/kitchen", (req, res) => res.json([]));
+app.get("/api/transactions", (req, res) => res.json([]));
+app.get("/api/waiter-calls", (req, res) => res.json([]));
+app.get("/api/tables", (req, res) => res.json([]));
 
 /* =========================
    ORDERS
 ========================= */
 
-app.get("/api/orders", (req, res) => {
-  res.json([]);
-});
+app.get("/api/orders", (req, res) => res.json([]));
 
 app.post("/api/orders", (req, res) => {
   res.json({
@@ -107,86 +110,9 @@ app.post("/api/auth/login", (req, res) => {
 });
 
 /* =========================
-   START SERVER
+   START SERVER (LAST)
 ========================= */
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-});
-/* =========================
-   DASHBOARD FULL FIX
-========================= */
-
-// main dashboard summary
-app.get("/api/dashboard/summary", (req, res) => {
-  res.json({
-    totalSales: 0,
-    totalOrders: 0,
-    avgOrderValue: 0,
-    netProfit: 0
-  });
-});
-
-// reports
-app.get("/api/reports/7day", (req, res) => {
-  res.json({
-    sales: [],
-    total: 0
-  });
-});
-
-// inventory alerts
-app.get("/api/inventory/alerts", (req, res) => {
-  res.json([]);
-});
-
-// kitchen list
-app.get("/api/kitchen", (req, res) => {
-  res.json([]);
-});
-
-// transactions
-app.get("/api/transactions", (req, res) => {
-  res.json([]);
-});
-
-// waiter calls
-app.get("/api/waiter-calls", (req, res) => {
-  res.json([]);
-});
-
-// tables
-app.get("/api/tables", (req, res) => {
-  res.json([]);
-});
-// fallback dashboard (VERY IMPORTANT)
-app.get("/api/dashboard", (req, res) => {
-  res.json({
-    totalSales: 0,
-    totalOrders: 0,
-    avgOrderValue: 0,
-    netProfit: 0
-  });
-});
-// FIX for frontend mismatch
-
-app.get("/api/dashboard/summary", (req, res) => {
-  res.json({
-    totalSales: 0,
-    totalOrders: 0,
-    avgOrderValue: 0,
-    netProfit: 0
-  });
-});
-
-app.get("/api/reports/7days", (req, res) => {
-  res.json([]);
-});
-
-app.get("/api/kitchen", (req, res) => {
-  res.json([]);
-});
-
-app.get("/api/tables", (req, res) => {
-  res.json([]);
 });
