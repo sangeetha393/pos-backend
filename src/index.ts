@@ -168,3 +168,25 @@ app.get("/api/dashboard", (req, res) => {
     netProfit: 0
   });
 });
+// FIX for frontend mismatch
+
+app.get("/api/dashboard/summary", (req, res) => {
+  res.json({
+    totalSales: 0,
+    totalOrders: 0,
+    avgOrderValue: 0,
+    netProfit: 0
+  });
+});
+
+app.get("/api/reports/7days", (req, res) => {
+  res.json([]);
+});
+
+app.get("/api/kitchen", (req, res) => {
+  res.json([]);
+});
+
+app.get("/api/tables", (req, res) => {
+  res.json([]);
+});
